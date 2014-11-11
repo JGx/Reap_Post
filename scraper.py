@@ -18,16 +18,26 @@ class Scraper:
 	def scrape(self):
 		submissions = self.r.get_subreddit(self.subreddit).get_hot(limit=25)
 		for x in submissions:
+			#only create entry if this post is an image
 			print x.url
+			if isImgurPost(x):
+				print 'is imgur post'
 
-class Post:
+
+def isImgurPost(submission):
+	return "imgur" in submission.url
+
+
+class RedditPost:
 
 	def __init__(self):
 		return
 
 	# prints the info about this post
-	def info():
+	def info(self):
 		print "Will add more info later"
+
+	
 
 scraper = Scraper(subreddit)
 scraper.scrape()
