@@ -5,30 +5,26 @@ from time import sleep
 #Parser asks user for subreddit to pull from
 parser = argparse.ArgumentParser(description='Reap Post')
 parser.add_argument('-S', dest='subreddit',  required=True)
-parser.add_argument('-N', dest='numScrapes', type=int, required=False)
+parser.add_argument('-N', dest='numPosts', type=int, required=False)
 args = vars(parser.parse_args())
 subreddit = args['subreddit']
-numScrapes = 1
-if args['numScrapes']!=None:
+numPosts = 100
+if args['numPosts'] != None:
 	#need to check for valid time -- TODO LATER
-	numScrapes = args['numScrapes']
+	numPosts = args['numPosts']
 
 class Scraper:
 
-	def __init__(self,subreddit,numScrapes):
+	def __init__(self,subreddit,numPosts):
 		self.r = praw.Reddit(user_agent="reappost")
 		self.subreddit = subreddit
-		self.numScrapes = numScrapes
+		self.numPosts = numPosts
 		return
 
 	# Scrapes the given subreddit for the latest 25 hot posts
 	def run(self):
-		imgurPosts =[]
-		#request every 2 seconds until numScrapes is reached
-		for scrape in range(0,self.numScrapes):
-			print 'Scrape #',scrape
-			imgurPosts+=self.scrape()
-			sleep(2)
+		#scrape all desired posts and store them in a list
+		imgurPosts = self.scrape()
 		
 		#print all posts titles
 		for p in imgurPosts:
@@ -36,11 +32,14 @@ class Scraper:
 
 	def scrape(self):
 		imgurPosts = []
-		submissions = self.r.get_subreddit(self.subreddit).get_hot(limit=25)
-		for x in submissions:
+		print self.numPosts
+
+		subreddit = self.r.get_subreddit(self.subreddit)
+		for post in subreddit.get_hot(limit=self.numPosts):
 			#only create entry if this post is an image
-			if isImgurPost(x):
-				imgurPosts.append(RedditPost(x))
+			if isImgurPost(post):
+				imgurPosts.append(RedditPost(post))
+		
 		return imgurPosts
 				
 
@@ -62,5 +61,5 @@ class RedditPost:
 		print "Will add more info later"
 
 
-scraper = Scraper(subreddit,numScrapes)
+scraper = Scraper(subreddit,numPosts)
 scraper.run()
