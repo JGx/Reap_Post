@@ -44,7 +44,7 @@ class Scraper:
 				
 
 def isImgurPost(submission):
-	return "imgur" in submission.url
+	return "i.imgur" in submission.url
 
 
 class RedditPost:
