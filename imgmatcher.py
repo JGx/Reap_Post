@@ -2,19 +2,21 @@ from PIL import Image
 import urllib, cStringIO
 from multiprocessing import Process, Pipe
 
-def mkNewImgMatcher(queuePipe, originalImage):
-	matcher = ImgMatcher(queuePipe, originalImage)
+def mkNewImgMatcher(pid, queuePipe, originalImage):
+	matcher = ImgMatcher(pid, queuePipe, originalImage)
 	matcher.run()
 
 class ImgMatcher:
 	
-	def __init__(self, queuePipe, origImg):
+	def __init__(self, pid, queuePipe, origImg):
 		self.queuePipe = queuePipe
 		self.origImg = origImg
+		self.pid = pid
 		
 	def run(self):
 		try:
 			while True:
+				self.queuePipe.send((self.pid, 'NEWIMG'))
 				(msgType, msg) = self.queuePipe.recv()
 				if msgType == 'HALT':
 					self.queuePipe.close()
