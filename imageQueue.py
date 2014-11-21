@@ -16,14 +16,14 @@ class ImageQueue:
 		#create numAgents pipes
 		self.numAgents = maxNumAgents
 		self.processPipes = []
-		for i in xrange(0,maxNumAgents):
-			pipein, pipeout = Pipe(False)
-			self.processPipes.append([pipein,pipeout])
-			self.pipeBusy[i] = False
+		
 		#initialize processes and pass the pipe
 		for i in xrange(0,maxNumAgents):
+			ourpipe, theirpipe = Pipe(True)
+			self.processPipes.append(ourpipe)
+			self.pipeBusy[i] = False
 			p = Process(target=mkNewImgMatcher,
-						args= (i,self.processPipes[i][1],self.imgLink))
+						args= (i+1,theirpipe,self.imgLink))
 			p.start()
 			#p.join()
 		return
@@ -40,40 +40,38 @@ class ImageQueue:
 
 	def printElems(self):
 		for elem in iter(self.queue.get,None):
-			print elem
+			print(elem)
 
 	def pollAllPipes(self):
-
-		for pipe in self.processPipes:
-			pipeIn = pipe[0]
-			gotMail = pipeIn.poll()
-			if gotMail:
-				return pipe.recv()
 		#query the reddit scraper pipe
-		newImg = self.mainPipe.poll()
-		if newImg:
+		if self.mainPipe.poll():
 			return self.mainPipe.recv()
+			
+		for pipe in self.processPipes:
+			if pipe.poll():
+				return pipe.recv()
+		
 		#nothing in any pipe
 		return None
 
 	def sendToArbitraryPipe(self):
 		#check if queue empty
-		if self.queueEmpty() == False:
+		if not self.queueEmpty():
 			#if not empty, pop and send to first available pipe
 			for i in xrange(0,len(self.processPipes.length)):
-				if self.pipeBusy[i] == False:
+				if not self.pipeBusy[i]:
 					self.sendToPipe(i)
 					return
 
 
 	def sendToPipe(self,pid):
 		self.pipeBusy[i] = True
-		self.processPipes[i].send("NEWIMG",self.pop())
+		self.processPipes[i].send(("NEWIMG",self.pop()))
 
 	#first check if queue empty
-	def checkQueueAndSendToPipe(self,pid):
-		if self.queueEmpty() == False:
-			self.sendToPipe(pid)
+	def checkQueueAndSendToPipe(self,index):
+		if not self.queueEmpty():
+			self.sendToPipe(index)
 
 	#receive from Reddit Scraper and from ImageProcessorWorkers
 	def run(self):
@@ -83,13 +81,13 @@ class ImageQueue:
 				if result != None:
 					(pid,msg) = result
 					#check queue and send to workers appropriately
-					sendToArbitraryPipe()
 					if pid == 0:#Reddit Scraper
 						self.push(msg)
 					elif msg == "NEWIMG":
-						self.sendToPipe(pid)
+						self.pipeBusy[pid-1] = False
+				sendToArbitraryPipe()
 		except IOError:
-			print 'IOError'
+			print('IOError')
 
 #test image queue
 
