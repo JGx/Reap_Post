@@ -26,7 +26,6 @@ class ImgMatcher:
 					self.queuePipe.close()
 					return
 				elif msgType == 'NEWIMG':
-					print('Scraping new image ', msg)
 					img = Image.open(cStringIO.StringIO(urllib.urlopen(msg.url).read()))
 					imgdata = list(img.getdata())
 					if len(self.origImg) != len(imgdata):
@@ -46,8 +45,9 @@ class ImgMatcher:
 			if ra != rb or ga != gb or ba != bb:
 				match = False
 				break
+		return 1.0
 				
 	def sendResult(self, match, msg):
-		#return requests.get('', params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match})
+		#return requests.get('/results', params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match})
 		params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match}
 		print(params)

@@ -80,10 +80,9 @@ class ImageQueue:
 		try:
 			while True:
 				if self.didWorkAndDone():
-					print('Done')
 					for lepipe in self.processPipes:
 						lepipe.send(('HALT', None))
-					self.mainPipe.send('hi')
+					self.mainPipe.send(None)
 					break
 				result = self.pollAllPipes()
 				if result != None:
