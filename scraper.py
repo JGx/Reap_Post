@@ -30,7 +30,7 @@ class Scraper:
 		self.imgLink = imgLink
 		self.queuePipes = []
 		pipeIn, pipeOut = Pipe()
-		self.pipeIn = pipeIn
+		self.pipe = pipeIn
 		self.queue = Process(target=mkNewImgQueue,
 						args=(pipeOut,self.url,2))#<-- change num workers here
 		return
@@ -51,10 +51,13 @@ class Scraper:
 		print self.numPosts
 
 		subreddit = self.r.get_subreddit(self.subreddit)
+		#we need to get relevant content, not get_hot
 		for post in subreddit.get_hot(limit=self.numPosts):
 			#only create entry if this post is an image
 			if isImgurPost(post):
 				imgurPosts.append(RedditPost(post))
+				self.pipe.send(0,"SCRAPE")
+
 		
 		return imgurPosts
 				
