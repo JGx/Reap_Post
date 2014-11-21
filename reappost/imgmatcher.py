@@ -4,7 +4,8 @@ from multiprocessing import Process, Pipe
 import scraper
 import requests
 
-def mkNewImgMatcher(pid, queuePipe, originalImage, threshold=0.95):
+def mkNewImgMatcher(pid, queuePipe, origImgUrl, threshold=0.95):
+	originalImage = Image.open(cStringIO.StringIO(urllib.urlopen(origImgUrl).read()))
 	matcher = ImgMatcher(pid, queuePipe, originalImage, threshold)
 	matcher.run()
 
@@ -42,10 +43,10 @@ class ImgMatcher:
 			(ra,ga,ba) = self.origImg[i]
 			(rb,gb,bb) = imgdata[i]
 			if ra != rb or ga != gb or ba != bb:
-				print("Images did NOT match")
 				match = False
 				break
 				
 	def sendResult(match, msg):
-		return requests.get('', params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match})
-		
+		#return requests.get('', params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match})
+		params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match}
+		print(params)
