@@ -23,7 +23,7 @@ class ImageQueue:
 		for i in xrange(0,maxNumAgents):
 			ourpipe, theirpipe = Pipe(True)
 			self.processPipes.append(ourpipe)
-			self.pipeBusy.append(False)
+			self.pipeBusy.append(True)
 			p = Process(target=imgmatcher.mkNewImgMatcher,
 						args= (i+1,theirpipe,self.imgLink))
 			p.start()
@@ -80,7 +80,7 @@ class ImageQueue:
 	def run(self):
 		try:
 			while True:
-				if didWorkAndDone():
+				if self.didWorkAndDone():
 					for lepipe in self.processPipes:
 						lepipe.send(('HALT', None))
 					self.mainPipe.send('hi')
@@ -96,7 +96,7 @@ class ImageQueue:
 							self.push(msg)
 					elif msg == "NEWIMG":
 						self.pipeBusy[pid-1] = False
-				sendToArbitraryPipe()
+				self.sendToArbitraryPipe()
 		except IOError:
 			print('IOError')
 			

@@ -31,8 +31,6 @@ class Scraper:
 		print(self.queuepipe.recv())
 
 	def scrape(self):
-		print self.numPosts
-
 		subreddit = self.r.get_subreddit(self.subreddit)
 		#we need to get relevant content, not get_hot
 		for post in subreddit.get_hot(limit=self.numPosts):

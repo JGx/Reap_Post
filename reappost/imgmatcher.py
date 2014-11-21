@@ -26,14 +26,15 @@ class ImgMatcher:
 					self.queuePipe.close()
 					return
 				elif msgType == 'NEWIMG':
+					print('Scraping new image ', msg)
 					img = Image.open(cStringIO.StringIO(urllib.urlopen(msg.url).read()))
 					imgdata = list(img.getdata())
 					if len(self.origImg) != len(imgdata):
-						sendResult(False, msg)
+						self.sendResult(False, msg)
 					else:
 						similarity = compareImage(imgdata)
 						if similarity >= self.threshold:
-							sendResult(True, msg)
+							self.sendResult(True, msg)
 		except IOError as e:
 			print("I/O error({0}): {1}".format(e.errno, e.strerror))
 	
