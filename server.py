@@ -19,5 +19,15 @@ def analyze():
 
 	return 200
 
+@app.route("/results", methods=["GET"])
+def results():
+	url = request.args.get("url")
+	score = request.args.get("score")
+	title = request.args.get("title")
+	num_comments = request.args.get("num_comments")
+	match = request.args.get("match")
+
+	print match
+
 if __name__ == "__main__":
 	app.run()
