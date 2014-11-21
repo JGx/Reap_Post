@@ -4,7 +4,8 @@ from multiprocessing import Process, Pipe
 import scraper
 import requests
 
-def mkNewImgMatcher(pid, queuePipe, originalImage, threshold=0.95):
+def mkNewImgMatcher(pid, queuePipe, origImgUrl, threshold=0.95):
+	originalImage = Image.open(cStringIO.StringIO(urllib.urlopen(origImgUrl).read()))
 	matcher = ImgMatcher(pid, queuePipe, originalImage, threshold)
 	matcher.run()
 

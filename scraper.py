@@ -3,24 +3,6 @@ import argparse
 import imageQueue
 from time import sleep
 from multiprocessing import Process, Pipe
-import imgmatcher
-
-if __name__ == 'main':
-	#Parser asks user for subreddit to pull from
-	parser = argparse.ArgumentParser(description='Reap Post')
-	parser.add_argument('-S', dest='subreddit',  required=True)
-	parser.add_argument('-I', dest='imgLink',  required=True)
-	parser.add_argument('-N', dest='numPosts', type=int, required=False)
-	args = vars(parser.parse_args())
-	subreddit = args['subreddit']
-	imgLink = args['imgLink']
-	numPosts = 100
-	if args['numPosts'] != None:
-		#need to check for valid time -- TODO LATER
-		numPosts = args['numPosts']
-	scraper = Scraper(subreddit,imgLink,numPosts)
-	scraper.run()
-
 
 class Scraper:
 
@@ -36,8 +18,8 @@ class Scraper:
 		self.imgLink = imgLink
 		ourpipe, theirpipe = Pipe()
 		self.queuepipe = ourpipe
-		self.queue = Process(target=mkNewImgQueue,
-						args=(theirpipe,self.url,2))#<-- change num workers here
+		self.queue = Process(target=imageQueue.mkNewImgQueue,
+						args=(theirpipe,imgLink,2))#<-- change num workers here
 		return
 
 	# Scrapes the given subreddit for the latest 25 hot posts
@@ -46,7 +28,7 @@ class Scraper:
 		self.queue.start()
 		self.scrape()
 		self.queuepipe.send((0, None))
-		self.queuepipe.recv()
+		print(self.queuepipe.recv())
 
 	def scrape(self):
 		print self.numPosts
@@ -56,11 +38,11 @@ class Scraper:
 		for post in subreddit.get_hot(limit=self.numPosts):
 			#only create entry if this post is an image
 			if isImgurPost(post):
-				self.queuepipe.send(0,RedditPost(post))
+				self.queuepipe.send((0,RedditPost(post)))
 				
 
-	def isImgurPost(submission):
-		return "i.imgur" in submission.url
+def isImgurPost(submission):
+	return "i.imgur" in submission.url
 
 
 class RedditPost:
@@ -75,3 +57,19 @@ class RedditPost:
 	# prints the info about this post
 	def info(self):
 		print "Will add more info later"
+
+if __name__ == '__main__':
+	#Parser asks user for subreddit to pull from
+	parser = argparse.ArgumentParser(description='Reap Post')
+	parser.add_argument('-S', dest='subreddit',  required=True)
+	parser.add_argument('-I', dest='imgLink',  required=True)
+	parser.add_argument('-N', dest='numPosts', type=int, required=False)
+	args = vars(parser.parse_args())
+	subreddit = args['subreddit']
+	imgLink = args['imgLink']
+	numPosts = 100
+	if args['numPosts'] != None:
+		#need to check for valid time -- TODO LATER
+		numPosts = args['numPosts']
+	scraper = Scraper(subreddit,imgLink,numPosts)
+	scraper.run()
