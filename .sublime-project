@@ -1,0 +1,11 @@
+{
+  "folders":
+  [{
+    "path": "src"
+  }],
+  "build_systems":
+  [{
+    "name": "Normal Build",
+    "cmd": ["python", "$file", "-S", "funny", "-I", "None"]
+  }]
+}

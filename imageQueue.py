@@ -4,6 +4,10 @@ import imgmatcher
 
 class ImageQueue:
 	
+	def mkNewImgQueue(pipe,imgLink,maxNumAgents):
+		queue = ImageQueue(pipe,imgLink,maxNumAgents)
+		queue.run()
+
 	def __init__(self,mainPipe,origImgLink,maxNumAgents):
 		self.imgLink = origImgLink
 		self.queue = Queue.LifoQueue()
@@ -13,7 +17,7 @@ class ImageQueue:
 		self.numAgents = maxNumAgents
 		self.processPipes = []
 		for i in xrange(0,maxNumAgents):
-			pipein, pipeout = Pipe()
+			pipein, pipeout = Pipe(False)
 			self.processPipes.append([pipein,pipeout])
 			self.pipeBusy[i] = False
 		#initialize processes and pass the pipe
@@ -39,10 +43,18 @@ class ImageQueue:
 			print elem
 
 	def pollAllPipes(self):
-		for [pipeIn,pipeOut] in self.processPipes:
-			gotMail = pipeOut.poll()
-			if gotMail != None:
-				return gotMail
+
+		for pipe in self.processPipes:
+			pipeIn = pipe[0]
+			gotMail = pipeIn.poll()
+			if gotMail:
+				return pipe.recv()
+		#query the reddit scraper pipe
+		newImg = self.mainPipe.poll()
+		if newImg:
+			return self.mainPipe.recv()
+		#nothing in any pipe
+		return None
 
 	def sendToArbitraryPipe(self):
 		#check if queue empty
@@ -64,16 +76,18 @@ class ImageQueue:
 			self.sendToPipe(pid)
 
 	#receive from Reddit Scraper and from ImageProcessorWorkers
-	def receiveLoop(self):
+	def run(self):
 		try:
 			while True:
-				(pid,msg) = self.pollAllPipes()
-				#check queue and send to workers appropriately
-				sendToArbitraryPipe()
-				if pid == 0:#Reddit Scraper
-					self.push(msg)
-				elif msg == "NEWIMG":
-					self.sendToPipe(pid)
+				result = self.pollAllPipes()
+				if result != None:
+					(pid,msg) = result
+					#check queue and send to workers appropriately
+					sendToArbitraryPipe()
+					if pid == 0:#Reddit Scraper
+						self.push(msg)
+					elif msg == "NEWIMG":
+						self.sendToPipe(pid)
 		except IOError:
 			print 'IOError'
 
