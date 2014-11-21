@@ -60,13 +60,12 @@ class ImageQueue:
 		#check if queue empty
 		if not self.queueEmpty():
 			#if not empty, pop and send to first available pipe
-			for i in xrange(0,len(self.processPipes.length)):
+			for i in xrange(0,len(self.processPipes)):
 				if not self.pipeBusy[i]:
 					self.sendToPipe(i)
 					return
 
-
-	def sendToPipe(self,pid):
+	def sendToPipe(self,i):
 		self.pipeBusy[i] = True
 		self.dispatches += 1
 		self.processPipes[i].send(("NEWIMG",self.pop()))
@@ -81,6 +80,7 @@ class ImageQueue:
 		try:
 			while True:
 				if self.didWorkAndDone():
+					print('Done')
 					for lepipe in self.processPipes:
 						lepipe.send(('HALT', None))
 					self.mainPipe.send('hi')

@@ -6,7 +6,7 @@ import requests
 
 def mkNewImgMatcher(pid, queuePipe, origImgUrl, threshold=0.95):
 	originalImage = Image.open(cStringIO.StringIO(urllib.urlopen(origImgUrl).read()))
-	matcher = ImgMatcher(pid, queuePipe, originalImage, threshold)
+	matcher = ImgMatcher(pid, queuePipe, list(originalImage.getdata()), threshold)
 	matcher.run()
 
 class ImgMatcher:
@@ -32,22 +32,22 @@ class ImgMatcher:
 					if len(self.origImg) != len(imgdata):
 						self.sendResult(False, msg)
 					else:
-						similarity = compareImage(imgdata)
+						similarity = self.compareImage(imgdata)
 						if similarity >= self.threshold:
 							self.sendResult(True, msg)
 		except IOError as e:
 			print("I/O error({0}): {1}".format(e.errno, e.strerror))
 	
-	def compareImage(otherImg):
+	def compareImage(self, otherImg):
 		datalen = len(otherImg)
-		for i in range(0,datalen):
+		for i in xrange(0,datalen):
 			(ra,ga,ba) = self.origImg[i]
-			(rb,gb,bb) = imgdata[i]
+			(rb,gb,bb) = otherImg[i]
 			if ra != rb or ga != gb or ba != bb:
 				match = False
 				break
 				
-	def sendResult(match, msg):
+	def sendResult(self, match, msg):
 		#return requests.get('', params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match})
 		params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match}
 		print(params)
