@@ -1,0 +1,17 @@
+<!doctype html>
+<head>
+	<title>ReapPost</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+	<script type="text/javascript" src="{{ url_for('static', filename='jquery.js') }}"></script>
+</head>
+
+<body>
+	<h1>Reap Post: You reap what you post</h1>
+	<form id="input-form">
+		<input id="imageLink" type="text" placeholder="Image Link" />
+		<input id="subreddit" type="text" placeholder="Subreddit" />
+		<input id="numPosts" type="text" placeholder="Number of posts to check" />
+		<button type="submit">Check For Reposts!</button>
+	</form>
+	<script type="text/javascript" src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
