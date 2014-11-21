@@ -2,19 +2,25 @@ import praw
 import argparse
 import imageQueue
 from time import sleep
+from multiprocessing import Process, Pipe
+import imgmatcher
 
-#Parser asks user for subreddit to pull from
-parser = argparse.ArgumentParser(description='Reap Post')
-parser.add_argument('-S', dest='subreddit',  required=True)
-parser.add_argument('-I', dest='imgLink',  required=True)
-parser.add_argument('-N', dest='numPosts', type=int, required=False)
-args = vars(parser.parse_args())
-subreddit = args['subreddit']
-imgLink = args['imgLink']
-numPosts = 100
-if args['numPosts'] != None:
-	#need to check for valid time -- TODO LATER
-	numPosts = args['numPosts']
+if __name__ == 'main':
+	#Parser asks user for subreddit to pull from
+	parser = argparse.ArgumentParser(description='Reap Post')
+	parser.add_argument('-S', dest='subreddit',  required=True)
+	parser.add_argument('-I', dest='imgLink',  required=True)
+	parser.add_argument('-N', dest='numPosts', type=int, required=False)
+	args = vars(parser.parse_args())
+	subreddit = args['subreddit']
+	imgLink = args['imgLink']
+	numPosts = 100
+	if args['numPosts'] != None:
+		#need to check for valid time -- TODO LATER
+		numPosts = args['numPosts']
+	scraper = Scraper(subreddit,imgLink,numPosts)
+	scraper.run()
+
 
 class Scraper:
 
@@ -28,26 +34,21 @@ class Scraper:
 		self.subreddit = subreddit
 		self.numPosts = numPosts
 		self.imgLink = imgLink
-		self.queuePipes = []
-		pipeIn, pipeOut = Pipe()
-		self.pipe = pipeIn
+		ourpipe, theirpipe = Pipe()
+		self.queuepipe = ourpipe
 		self.queue = Process(target=mkNewImgQueue,
-						args=(pipeOut,self.url,2))#<-- change num workers here
+						args=(theirpipe,self.url,2))#<-- change num workers here
 		return
 
 	# Scrapes the given subreddit for the latest 25 hot posts
 	def run(self):
 		#scrape all desired posts and store them in a list
 		self.queue.start()
-		imgurPosts = self.scrape()
-		
-		#print all posts titles
-		for p in imgurPosts:
-			self.queue.push(p)
-			print p.title
+		self.scrape()
+		self.queuepipe.send((0, None))
+		self.queuepipe.recv()
 
 	def scrape(self):
-		imgurPosts = []
 		print self.numPosts
 
 		subreddit = self.r.get_subreddit(self.subreddit)
@@ -55,15 +56,11 @@ class Scraper:
 		for post in subreddit.get_hot(limit=self.numPosts):
 			#only create entry if this post is an image
 			if isImgurPost(post):
-				imgurPosts.append(RedditPost(post))
-				self.pipe.send(0,"SCRAPE")
-
-		
-		return imgurPosts
+				self.queuepipe.send(0,RedditPost(post))
 				
 
-def isImgurPost(submission):
-	return "i.imgur" in submission.url
+	def isImgurPost(submission):
+		return "i.imgur" in submission.url
 
 
 class RedditPost:
@@ -78,7 +75,3 @@ class RedditPost:
 	# prints the info about this post
 	def info(self):
 		print "Will add more info later"
-
-
-scraper = Scraper(subreddit,imgLink,numPosts)
-scraper.run()

@@ -2,11 +2,11 @@ import Queue
 from multiprocessing import Process, Pipe
 import imgmatcher
 
-class ImageQueue:
-	
-	def mkNewImgQueue(pipe,imgLink,maxNumAgents):
+def mkNewImgQueue(pipe,imgLink,maxNumAgents):
 		queue = ImageQueue(pipe,imgLink,maxNumAgents)
 		queue.run()
+
+class ImageQueue:
 
 	def __init__(self,mainPipe,origImgLink,maxNumAgents):
 		self.imgLink = origImgLink
@@ -16,6 +16,7 @@ class ImageQueue:
 		#create numAgents pipes
 		self.numAgents = maxNumAgents
 		self.processPipes = []
+		self.dispatches = 0
 		
 		#initialize processes and pass the pipe
 		for i in xrange(0,maxNumAgents):
@@ -66,6 +67,7 @@ class ImageQueue:
 
 	def sendToPipe(self,pid):
 		self.pipeBusy[i] = True
+		self.dispatches += 1
 		self.processPipes[i].send(("NEWIMG",self.pop()))
 
 	#first check if queue empty
@@ -77,17 +79,34 @@ class ImageQueue:
 	def run(self):
 		try:
 			while True:
+				if didWorkAndDone():
+					for lepipe in self.processPipes:
+						lepipe.send(('HALT', None))
+					self.mainPipe.send(None)
 				result = self.pollAllPipes()
 				if result != None:
 					(pid,msg) = result
 					#check queue and send to workers appropriately
 					if pid == 0:#Reddit Scraper
-						self.push(msg)
+						if msg == None:
+							#end stuff
+						else:
+							self.push(msg)
 					elif msg == "NEWIMG":
 						self.pipeBusy[pid-1] = False
 				sendToArbitraryPipe()
 		except IOError:
 			print('IOError')
+			
+	def didWorkAndDone(self):
+		if self.dispatches > 0:
+			done = True
+			for busy in self.pipeBusy:
+				if busy:
+					done = False
+					break
+			return done
+		return False
 
 #test image queue
 
