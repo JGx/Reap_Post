@@ -4,15 +4,17 @@ from multiprocessing import Process, Pipe
 import scraper
 import requests
 
-def mkNewImgMatcher(pid, queuePipe, origImgUrl, threshold=0.95):
+def mkNewImgMatcher(pid, queuePipe, urlPipe, queueLock, origImgUrl, threshold=0.95):
 	originalImage = Image.open(cStringIO.StringIO(urllib.urlopen(origImgUrl).read()))
-	matcher = ImgMatcher(pid, queuePipe, list(originalImage.getdata()), threshold)
+	matcher = ImgMatcher(pid, queuePipe, urlPipe, queueLock, list(originalImage.getdata()), threshold)
 	matcher.run()
 
 class ImgMatcher:
 	
-	def __init__(self, pid, queuePipe, origImg, threshold):
+	def __init__(self, pid, queuePipe, urlPipe, queueLock, origImg, threshold):
 		self.queuePipe = queuePipe
+		self.urlPipe = urlPipe
+		self.queueLock = queueLock
 		self.origImg = origImg
 		self.pid = pid
 		self.threshold = threshold
@@ -20,10 +22,14 @@ class ImgMatcher:
 	def run(self):
 		try:
 			while True:
+				print('Worker ', self.pid, ' is requesting a new img')
+				self.queueLock.acquire(True)
 				self.queuePipe.send((self.pid, 'NEWIMG'))
-				(msgType, msg) = self.queuePipe.recv()
+				self.queueLock.release()
+				(msgType, msg) = self.urlPipe.recv()
 				if msgType == 'HALT':
-					self.queuePipe.close()
+					#self.queuePipe.close()
+					self.urlPipe.close()
 					return
 				elif msgType == 'NEWIMG':
 					img = Image.open(cStringIO.StringIO(urllib.urlopen(msg.url).read()))
@@ -32,7 +38,7 @@ class ImgMatcher:
 						self.sendResult(False, msg)
 					else:
 						similarity = self.compareImage(imgdata)
-						if similarity >= self.threshold:
+						if self.match and similarity >= self.threshold:
 							self.sendResult(True, msg)
 		except IOError as e:
 			print("I/O error({0}): {1}".format(e.errno, e.strerror))

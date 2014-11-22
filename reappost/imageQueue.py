@@ -2,16 +2,18 @@ import Queue
 from multiprocessing import Process, Pipe
 import imgmatcher
 
-def mkNewImgQueue(pipe,imgLink,maxNumAgents):
-	queue = ImageQueue(pipe,imgLink,maxNumAgents)
+def mkNewImgQueue(mainPipe,recvPipe,queueLock,imgLink,maxNumAgents):
+	queue = ImageQueue(mainPipe,recvPipe,queueLock,imgLink,maxNumAgents)
 	queue.run()
 
 class ImageQueue:
 
-	def __init__(self,mainPipe,origImgLink,maxNumAgents):
+	def __init__(self,mainPipe,recvPipe,queueLock,origImgLink,maxNumAgents):
 		self.imgLink = origImgLink
 		self.queue = Queue.LifoQueue()
 		self.mainPipe = mainPipe
+		self.recvPipe = recvPipe
+		self.queueLock = queueLock
 		self.pipeBusy = []
 		#create numAgents pipes
 		self.numAgents = maxNumAgents
@@ -25,7 +27,7 @@ class ImageQueue:
 			self.processPipes.append(ourpipe)
 			self.pipeBusy.append(True)
 			p = Process(target=imgmatcher.mkNewImgMatcher,
-						args= (i+1,theirpipe,self.imgLink))
+						args= (i+1,self.mainPipe,theirpipe,self.queueLock,self.imgLink))
 			p.start()
 			#p.join()
 		return
@@ -84,17 +86,17 @@ class ImageQueue:
 						lepipe.send(('HALT', None))
 					self.mainPipe.send(None)
 					break
-				result = self.pollAllPipes()
-				if result != None:
-					(pid,msg) = result
-					#check queue and send to workers appropriately
-					if pid == 0:#Reddit Scraper
-						if msg == None:
-							self.expectingScrapes = False
-						else:
-							self.push(msg)
-					elif msg == "NEWIMG":
-						self.pipeBusy[pid-1] = False
+				result = self.recvPipe.recv()
+				#if result != None:
+				(pid,msg) = result
+				#check queue and send to workers appropriately
+				if pid == 0:#Reddit Scraper
+					if msg == None:
+						self.expectingScrapes = False
+					else:
+						self.push(msg)
+				elif msg == "NEWIMG":
+					self.pipeBusy[pid-1] = False
 				self.sendToArbitraryPipe()
 		except IOError:
 			print('IOError')

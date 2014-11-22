@@ -2,7 +2,7 @@ import praw
 import argparse
 import imageQueue
 from time import sleep
-from multiprocessing import Process, Pipe
+from multiprocessing import Process, Pipe, Lock
 
 class Scraper:
 
@@ -17,9 +17,10 @@ class Scraper:
 		self.numPosts = numPosts
 		self.imgLink = imgLink
 		ourpipe, theirpipe = Pipe()
+		self.queueLock = Lock()
 		self.queuepipe = ourpipe
 		self.queue = Process(target=imageQueue.mkNewImgQueue,
-						args=(theirpipe,imgLink,2))#<-- change num workers here
+						args=(self.queuepipe,theirpipe,self.queueLock,imgLink,2))#<-- change num workers here
 		return
 
 	# Scrapes the given subreddit for the latest 25 hot posts
@@ -27,7 +28,9 @@ class Scraper:
 		#scrape all desired posts and store them in a list
 		self.queue.start()
 		self.scrape()
+		self.queueLock.acquire(True)
 		self.queuepipe.send((0, None))
+		self.queueLock.release()
 		self.queuepipe.recv()
 
 	def scrape(self):
@@ -36,7 +39,9 @@ class Scraper:
 		for post in subreddit.get_hot(limit=self.numPosts):
 			#only create entry if this post is an image
 			if isImgurPost(post):
+				self.queueLock.acquire(True)
 				self.queuepipe.send((0,RedditPost(post)))
+				self.queueLock.release()
 				
 
 def isImgurPost(submission):
@@ -54,7 +59,7 @@ class RedditPost:
 
 	# prints the info about this post
 	def info(self):
-		print "Will add more info later"
+		print("Will add more info later")
 
 if __name__ == '__main__':
 	#Parser asks user for subreddit to pull from
