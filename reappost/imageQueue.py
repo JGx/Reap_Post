@@ -84,7 +84,6 @@ class ImageQueue:
 				if self.didWorkAndDone():
 					for lepipe in self.processPipes:
 						lepipe.send(('HALT', None))
-					self.mainPipe.send(None)
 					break
 				result = self.recvPipe.recv()
 				#if result != None:
@@ -102,7 +101,7 @@ class ImageQueue:
 			print('IOError')
 			
 	def didWorkAndDone(self):
-		if self.dispatches > 0 and not self.expectingScrapes:
+		if self.dispatches > 0 and not self.expectingScrapes and self.queueEmpty():
 			done = True
 			for busy in self.pipeBusy:
 				if busy:

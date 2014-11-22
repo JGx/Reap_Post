@@ -31,14 +31,15 @@ class Scraper:
 		self.queueLock.acquire(True)
 		self.queuepipe.send((0, None))
 		self.queueLock.release()
-		self.queuepipe.recv()
+		self.queue.join()
+		print("Joined")
 
 	def scrape(self):
 		subreddit = self.r.get_subreddit(self.subreddit)
 		#we need to get relevant content, not get_hot
 		for post in subreddit.get_hot(limit=self.numPosts):
 			#only create entry if this post is an image
-			if isImgurPost(post):
+			if isImgurPost(post):	
 				self.queueLock.acquire(True)
 				self.queuepipe.send((0,RedditPost(post)))
 				self.queueLock.release()

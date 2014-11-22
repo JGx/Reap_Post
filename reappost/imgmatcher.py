@@ -45,11 +45,12 @@ class ImgMatcher:
 	
 	def compareImage(self, otherImg):
 		datalen = len(otherImg)
+		self.match = True
 		for i in xrange(0,datalen):
 			(ra,ga,ba) = self.origImg[i]
 			(rb,gb,bb) = otherImg[i]
 			if ra != rb or ga != gb or ba != bb:
-				match = False
+				self.match = False
 				break
 		return 1.0
 				
