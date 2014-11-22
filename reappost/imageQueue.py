@@ -32,7 +32,6 @@ class ImageQueue:
 			#p.join()
 		return
 
-
 	def push(self,img):
 		self.queue.put(img)
 

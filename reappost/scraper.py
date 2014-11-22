@@ -20,7 +20,7 @@ class Scraper:
 		self.queueLock = Lock()
 		self.queuepipe = ourpipe
 		self.queue = Process(target=imageQueue.mkNewImgQueue,
-						args=(self.queuepipe,theirpipe,self.queueLock,imgLink,2))#<-- change num workers here
+						args=(self.queuepipe,theirpipe,self.queueLock,imgLink,20))#<-- change num workers here
 		return
 
 	# Scrapes the given subreddit for the latest 25 hot posts
