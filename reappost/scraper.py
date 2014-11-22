@@ -45,7 +45,7 @@ class Scraper:
 				
 
 def isImgurPost(submission):
-	return "i.imgur" in submission.url
+	return "i.imgur" in submission.url and not submission.url.endswith('.gifv')
 
 
 class RedditPost:
