@@ -17,6 +17,7 @@ class ImgMatcher:
 		self.queueLock = queueLock
 		self.origImg = list(origImg.getdata())
 		self.origImgBands = origImg.getbands()
+		self.origImgExtrema = origImg.getextrema()
 		self.pid = pid
 		self.threshold = threshold
 		
@@ -39,13 +40,13 @@ class ImgMatcher:
 					if len(self.origImg) != len(imgdata):
 						self.sendResult(False, msg)
 					else:
-						similarity = self.compareImage(imgdata, img.getbands())
+						similarity = self.compareImage(imgdata, img.getbands(), img.getextrema())
 						if similarity <= self.threshold:
 							self.sendResult(True, msg)
 		except IOError as e:
 			print("I/O error({0}): {1} . {2}".format(e.errno, e.strerror, last.info()))
 	
-	def compareImage(self, otherImg, otherImgBands):
+	def compareImage(self, otherImg, otherImgBands, otherExtrema):
 		bandlen = len(otherImgBands)
 		if len(self.origImgBands) != bandlen:
 			return 1.0
@@ -55,10 +56,12 @@ class ImgMatcher:
 			diffs = 0.0
 			if bandlen > 1:
 				for v in xrange(0,bandlen):
-					diffs += abs(self.origImg[i][v] - otherImg[i][v])
+					diffs += abs((self.origImg[i][v] - self.origImgExtrema[v][0]) / (self.origImgExtrema[v][1] - self.origImgExtrema[v][0]) -
+							(otherImg[i][v] - otherExtrema[v][0]) / (otherExtrema[v][1] - otherExtrema[v][0]))
 				diffs /= bandlen
 			else:
-				diffs = abs(self.origImg[i] - otherImg[i])
+				diffs = abs((self.origImg[i] - self.origImgExtrema[0]) / (self.origImgExtrema[1] - self.origImgExtrema[0]) -
+							(otherImg[i] - otherExtrema[0]) / (otherExtrema[1] - otherExtrema[0]))
 			diff += diffs
 		return diff / datalen
 
