@@ -4,7 +4,7 @@ from multiprocessing import Process, Pipe
 import scraper
 import requests
 
-def mkNewImgMatcher(pid, queuePipe, urlPipe, queueLock, origImgUrl, threshold=0.15):
+def mkNewImgMatcher(pid, queuePipe, urlPipe, queueLock, origImgUrl, threshold=0.05):
 	originalImage = Image.open(cStringIO.StringIO(urllib.urlopen(origImgUrl).read()))
 	matcher = ImgMatcher(pid, queuePipe, urlPipe, queueLock, originalImage, threshold)
 	matcher.run()
@@ -38,11 +38,11 @@ class ImgMatcher:
 					img = Image.open(cStringIO.StringIO(urllib.urlopen(msg.url).read()))
 					imgdata = list(img.getdata())
 					if len(self.origImg) != len(imgdata):
-						self.sendResult(False, msg)
+						self.sendResult(False, msg, 1.0)
 					else:
 						similarity = self.compareImage(imgdata, img.getbands(), img.getextrema())
 						if similarity <= self.threshold:
-							self.sendResult(True, msg)
+							self.sendResult(True, msg, similarity)
 		except IOError as e:
 			print("I/O error({0}): {1} . {2}".format(e.errno, e.strerror, last.info()))
 	
@@ -65,9 +65,9 @@ class ImgMatcher:
 			diff += diffs
 		return diff / datalen
 
-	def sendResult(self, match, msg):
+	def sendResult(self, match, msg, similarity):
 		#return requests.get('/results', params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match})
-		params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match}
+		params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match, 'similarity':similarity}
 		self.queueLock.acquire(True)
 		if match:
 			print(params)
