@@ -32,7 +32,6 @@ class Scraper:
 		self.queuepipe.send((0, None))
 		self.queueLock.release()
 		self.queue.join()
-		print("Joined")
 
 	def scrape(self):
 		subreddit = self.r.get_subreddit(self.subreddit)
@@ -60,7 +59,7 @@ class RedditPost:
 
 	# prints the info about this post
 	def info(self):
-		print("Will add more info later")
+		return {'url':self.url, 'title':self.title, 'score':self.score, 'comments':self.num_comments}
 
 if __name__ == '__main__':
 	#Parser asks user for subreddit to pull from

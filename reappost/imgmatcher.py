@@ -20,9 +20,9 @@ class ImgMatcher:
 		self.threshold = threshold
 		
 	def run(self):
+		last = None
 		try:
 			while True:
-				print('Worker ', self.pid, ' is requesting a new img')
 				self.queueLock.acquire(True)
 				self.queuePipe.send((self.pid, 'NEWIMG'))
 				self.queueLock.release()
@@ -32,6 +32,7 @@ class ImgMatcher:
 					self.urlPipe.close()
 					return
 				elif msgType == 'NEWIMG':
+					last = msg
 					img = Image.open(cStringIO.StringIO(urllib.urlopen(msg.url).read()))
 					imgdata = list(img.getdata())
 					if len(self.origImg) != len(imgdata):
@@ -41,7 +42,7 @@ class ImgMatcher:
 						if self.match and similarity >= self.threshold:
 							self.sendResult(True, msg)
 		except IOError as e:
-			print("I/O error({0}): {1}".format(e.errno, e.strerror))
+			print("I/O error({0}): {1} . {2}".format(e.errno, e.strerror, last.info()))
 	
 	def compareImage(self, otherImg):
 		datalen = len(otherImg)
@@ -57,4 +58,4 @@ class ImgMatcher:
 	def sendResult(self, match, msg):
 		#return requests.get('/results', params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match})
 		params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match}
-		print(params)
+		#print(params)
