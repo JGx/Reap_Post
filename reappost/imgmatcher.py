@@ -10,7 +10,6 @@ def mkNewImgMatcher(pid, queuePipe, urlPipe, queueLock, origImgUrl, threshold=0.
 	matcher.run()
 
 class ImgMatcher:
-	
 	def __init__(self, pid, queuePipe, urlPipe, queueLock, origImg, threshold):
 		self.queuePipe = queuePipe
 		self.urlPipe = urlPipe
@@ -40,9 +39,9 @@ class ImgMatcher:
 					if len(self.origImg) != len(imgdata):
 						self.sendResult(False, msg, 1.0)
 					else:
-						similarity = self.compareImage(imgdata, img.getbands(), img.getextrema())
-						if similarity <= self.threshold:
-							self.sendResult(True, msg, similarity)
+						difference = self.compareImage(imgdata, img.getbands(), img.getextrema())
+						if difference <= self.threshold:
+							self.sendResult(True, msg, difference)
 		except IOError as e:
 			print("I/O error({0}): {1} . {2}".format(e.errno, e.strerror, last.info()))
 	
@@ -65,9 +64,9 @@ class ImgMatcher:
 			diff += diffs
 		return diff / datalen
 
-	def sendResult(self, match, msg, similarity):
+	def sendResult(self, match, msg, difference):
 		#return requests.get('/results', params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match})
-		params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match, 'similarity':similarity}
+		params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match, 'difference':difference}
 		self.queueLock.acquire(True)
 		if match:
 			print(params)
