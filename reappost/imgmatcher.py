@@ -4,7 +4,7 @@ from multiprocessing import Process, Pipe
 import scraper
 import requests
 
-def mkNewImgMatcher(pid, queuePipe, urlPipe, queueLock, origImgUrl, threshold=0.05):
+def mkNewImgMatcher(pid, queuePipe, urlPipe, queueLock, origImgUrl, threshold):
 	originalImage = Image.open(cStringIO.StringIO(urllib.urlopen(origImgUrl).read()))
 	matcher = ImgMatcher(pid, queuePipe, urlPipe, queueLock, originalImage, threshold)
 	matcher.run()
@@ -54,10 +54,16 @@ class ImgMatcher:
 		for i in xrange(0,datalen):
 			diffs = 0.0
 			if bandlen > 1:
+				skip = []
 				for v in xrange(0,bandlen):
+					if otherExtrema[v][0] == otherExtrema[v][1]:
+						skip.append(v)
+				for v in xrange(0,bandlen):
+					if v in skip:
+						continue
 					diffs += abs((self.origImg[i][v] - self.origImgExtrema[v][0]) / (self.origImgExtrema[v][1] - self.origImgExtrema[v][0]) -
 							(otherImg[i][v] - otherExtrema[v][0]) / (otherExtrema[v][1] - otherExtrema[v][0]))
-				diffs /= bandlen
+				diffs /= (bandlen - len(skip))
 			else:
 				diffs = abs((self.origImg[i] - self.origImgExtrema[0]) / (self.origImgExtrema[1] - self.origImgExtrema[0]) -
 							(otherImg[i] - otherExtrema[0]) / (otherExtrema[1] - otherExtrema[0]))

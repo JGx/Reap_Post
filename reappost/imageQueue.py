@@ -2,13 +2,13 @@ import Queue
 from multiprocessing import Process, Pipe
 import imgmatcher
 
-def mkNewImgQueue(mainPipe,recvPipe,queueLock,imgLink,maxNumAgents):
-	queue = ImageQueue(mainPipe,recvPipe,queueLock,imgLink,maxNumAgents)
+def mkNewImgQueue(mainPipe,recvPipe,queueLock,imgLink,threshold,maxNumAgents):
+	queue = ImageQueue(mainPipe,recvPipe,queueLock,imgLink,threshold,maxNumAgents)
 	queue.run()
 
 class ImageQueue:
 
-	def __init__(self,mainPipe,recvPipe,queueLock,origImgLink,maxNumAgents):
+	def __init__(self,mainPipe,recvPipe,queueLock,origImgLink,threshold,maxNumAgents):
 		self.imgLink = origImgLink
 		self.queue = Queue.LifoQueue()
 		self.mainPipe = mainPipe
@@ -27,7 +27,7 @@ class ImageQueue:
 			self.processPipes.append(ourpipe)
 			self.pipeBusy.append(True)
 			p = Process(target=imgmatcher.mkNewImgMatcher,
-						args= (i+1,self.mainPipe,theirpipe,self.queueLock,self.imgLink))
+						args= (i+1,self.mainPipe,theirpipe,self.queueLock,self.imgLink,threshold))
 			p.start()
 			#p.join()
 		return

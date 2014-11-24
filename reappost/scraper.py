@@ -6,7 +6,7 @@ from multiprocessing import Process, Pipe, Lock
 
 class Scraper:
 
-	def __init__(self,subreddit,imgLink,numPosts):
+	def __init__(self,subreddit,imgLink,numPosts,threshold,num_workers):
 		#check if python build script works in sublime
 		if imgLink == None:
 			print "Received None imgLink"
@@ -20,7 +20,7 @@ class Scraper:
 		self.queueLock = Lock()
 		self.queuepipe = ourpipe
 		self.queue = Process(target=imageQueue.mkNewImgQueue,
-						args=(self.queuepipe,theirpipe,self.queueLock,imgLink,20))#<-- change num workers here
+						args=(self.queuepipe,theirpipe,self.queueLock,imgLink,threshold,num_workers))#<-- change num workers here
 		return
 
 	# Scrapes the given subreddit for the latest 25 hot posts
@@ -67,6 +67,8 @@ if __name__ == '__main__':
 	parser.add_argument('-S', dest='subreddit',  required=True)
 	parser.add_argument('-I', dest='imgLink',  required=True)
 	parser.add_argument('-N', dest='numPosts', type=int, required=False)
+	parser.add_argument('-T', dest='threshold', type=float, required=False, default=0.05)
+	parser.add_argument('-W', dest='numWorkers', type=int, required=False, default=20)
 	args = vars(parser.parse_args())
 	subreddit = args['subreddit']
 	imgLink = args['imgLink']
@@ -74,5 +76,7 @@ if __name__ == '__main__':
 	if args['numPosts'] != None:
 		#need to check for valid time -- TODO LATER
 		numPosts = args['numPosts']
-	scraper = Scraper(subreddit,imgLink,numPosts)
+	threshold = args['threshold']
+	num_workers = args['numWorkers']
+	scraper = Scraper(subreddit,imgLink,numPosts,threshold,num_workers)
 	scraper.run()
