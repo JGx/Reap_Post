@@ -14,12 +14,14 @@ class ImageQueue:
 		self.mainPipe = mainPipe
 		self.recvPipe = recvPipe
 		self.queueLock = queueLock
+		self.numImages = 0
 		self.pipeBusy = []
 		#create numAgents pipes
 		self.numAgents = maxNumAgents
 		self.processPipes = []
 		self.dispatches = 0
 		self.expectingScrapes = True
+		self.matches = []
 		
 		#initialize processes and pass the pipe
 		for i in xrange(0,maxNumAgents):
@@ -33,6 +35,7 @@ class ImageQueue:
 		return
 
 	def push(self,img):
+		self.numImages += 1
 		self.queue.put(img)
 
 	def pop(self):
@@ -83,6 +86,7 @@ class ImageQueue:
 				if self.didWorkAndDone():
 					for lepipe in self.processPipes:
 						lepipe.send(('HALT', None))
+					self.printFinalStats()
 					break
 				result = self.recvPipe.recv()
 				#if result != None:
@@ -95,9 +99,30 @@ class ImageQueue:
 						self.push(msg)
 				elif msg == "NEWIMG":
 					self.pipeBusy[pid-1] = False
+				else:
+					self.printNewMatch(pid,msg)
+					self.pipeBusy[pid-1] = False
 				self.sendToArbitraryPipe()
 		except IOError:
 			print('IOError')
+
+	def printNewMatch(self,pid,msg):
+		#add msg to list of matches for final analysis
+		self.matches.append(msg)
+		#pretty print current match
+		print '\n'
+		print 'Received new match from pipe#',pid 
+		print 'URL: ',msg['url']
+
+	def printFinalStats(self):
+		print '\n'
+		print '-----------------------------------'
+		print 'Reap Post Final Analysis:'
+		print 'Out of', self.numImages,'image posts,',len(self.matches),'were reposts'
+		print 'Img links in order of reddit post score'
+		sortedMatches = sorted(self.matches,key = lambda match: match['score'],reverse=True)
+		for m in sortedMatches:
+			print 'Title:',m['title'], 'Score:', m['score']
 			
 	def didWorkAndDone(self):
 		if self.dispatches > 0 and not self.expectingScrapes and self.queueEmpty():

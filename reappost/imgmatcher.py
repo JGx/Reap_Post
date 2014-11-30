@@ -75,5 +75,6 @@ class ImgMatcher:
 		params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match, 'difference':difference}
 		self.queueLock.acquire(True)
 		if match:
-			print(params)
+			self.queuePipe.send((self.pid,params))
+			#print(params)
 		self.queueLock.release()
