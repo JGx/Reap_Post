@@ -43,7 +43,8 @@ class ImgMatcher:
 						if difference <= self.threshold:
 							self.sendResult(True, msg, difference)
 		except IOError as e:
-			print("I/O error({0}): {1} . {2}".format(e.errno, e.strerror, last.info()))
+			#print("I/O error({0}): {1} . {2}".format(e.errno, e.strerror, last.info()))
+			pass
 	
 	def compareImage(self, otherImg, otherImgBands, otherExtrema):
 		bandlen = len(otherImgBands)

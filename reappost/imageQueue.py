@@ -104,7 +104,8 @@ class ImageQueue:
 					self.pipeBusy[pid-1] = False
 				self.sendToArbitraryPipe()
 		except IOError:
-			print('IOError')
+			#print('IOError')
+			pass
 
 	def printNewMatch(self,pid,msg):
 		#add msg to list of matches for final analysis
