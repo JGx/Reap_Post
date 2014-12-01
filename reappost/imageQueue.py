@@ -123,10 +123,16 @@ class ImageQueue:
 		print '-----------------------------------'
 		print 'Reap Post Final Analysis:'
 		print 'Out of', self.numImages,'image posts,',len(self.matches),'were reposts'
-		print 'Img links in order of reddit post score'
+		print 'Img links in descending order of reddit post score\n'
 		sortedMatches = sorted(self.matches,key = lambda match: match['score'],reverse=True)
+		num = 0
 		for m in sortedMatches:
-			print 'Title:',m['title'], 'Score:', m['score']
+			print '#', num
+			num += 1
+			print 'Score:', m['score']
+			print 'Title:',m['title']
+			print '  URL:',m['url']
+			print '\n'
 			
 	def didWorkAndDone(self):
 		if self.dispatches > 0 and not self.expectingScrapes and self.queueEmpty():
