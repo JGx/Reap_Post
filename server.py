@@ -15,7 +15,11 @@ def analyze():
 	subreddit = request.form['subreddit']
 	num_posts = request.form['numPosts']
 
-	subprocess.call(["python", "reappost/scraper.py", "-S", subreddit, "-I", image, "-N", num_posts])
+	subprocess.call(["python", "reappost/scraper.py", 
+		"-S", subreddit, 
+		"-I", image,
+		"-N", num_posts
+		'-W', 20])
 
 	return 200
 

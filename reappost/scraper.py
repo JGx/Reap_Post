@@ -28,7 +28,7 @@ class Scraper:
 		self.queue.start()
 		self.scrape()
 		self.queuepipe.send((0, None))
-		print(self.queuepipe.recv())
+		self.queuepipe.recv()
 
 	def scrape(self):
 		subreddit = self.r.get_subreddit(self.subreddit)
