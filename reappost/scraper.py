@@ -66,16 +66,13 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Reap Post')
 	parser.add_argument('-S', dest='subreddit',  required=True)
 	parser.add_argument('-I', dest='imgLink',  required=True)
-	parser.add_argument('-N', dest='numPosts', type=int, required=False)
+	parser.add_argument('-N', dest='numPosts', type=int, required=False, default=100)
 	parser.add_argument('-T', dest='threshold', type=float, required=False, default=0.05)
 	parser.add_argument('-W', dest='numWorkers', type=int, required=False, default=20)
 	args = vars(parser.parse_args())
 	subreddit = args['subreddit']
 	imgLink = args['imgLink']
-	numPosts = 100
-	if args['numPosts'] != None:
-		#need to check for valid time -- TODO LATER
-		numPosts = args['numPosts']
+	numPosts = args['numPosts']
 	threshold = args['threshold']
 	num_workers = args['numWorkers']
 	scraper = Scraper(subreddit,imgLink,numPosts,threshold,num_workers)
