@@ -113,7 +113,10 @@ class ImageQueue:
 		#pretty print current match
 		print '\n'
 		print 'Received new match from pipe#',pid 
-		print 'URL: ',msg['url']
+		print 'Title: ',msg['title']
+		print '  Url: ',msg['url']
+		print 'Score: ',msg['score']
+		print ' Diff: ',msg['difference']
 
 	def printFinalStats(self):
 		print '\n'

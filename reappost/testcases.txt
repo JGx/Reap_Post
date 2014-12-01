@@ -1,0 +1,5 @@
+Test Cases
+
+python scraper.py -S AdviceAnimals -I http://i.imgur.com/BIb0UEk.jpg -N 100 -W 25
+python scraper.py -S AdviceAnimals -I http://i.imgur.com/mxVvfSk.jpg -N 100 -W 25
+python scraper.py -S AdviceAnimals -I http://i.imgur.com/qGFEFfI.png -N 200 -W 25 -T 0.3
