@@ -2,22 +2,26 @@ import Queue
 from multiprocessing import Process, Pipe
 import imgmatcher
 
-def mkNewImgQueue(pipe,imgLink,maxNumAgents):
-	queue = ImageQueue(pipe,imgLink,maxNumAgents)
+def mkNewImgQueue(mainPipe,recvPipe,queueLock,imgLink,threshold,maxNumAgents):
+	queue = ImageQueue(mainPipe,recvPipe,queueLock,imgLink,threshold,maxNumAgents)
 	queue.run()
 
 class ImageQueue:
 
-	def __init__(self,mainPipe,origImgLink,maxNumAgents):
+	def __init__(self,mainPipe,recvPipe,queueLock,origImgLink,threshold,maxNumAgents):
 		self.imgLink = origImgLink
 		self.queue = Queue.LifoQueue()
 		self.mainPipe = mainPipe
+		self.recvPipe = recvPipe
+		self.queueLock = queueLock
+		self.numImages = 0
 		self.pipeBusy = []
 		#create numAgents pipes
 		self.numAgents = maxNumAgents
 		self.processPipes = []
 		self.dispatches = 0
 		self.expectingScrapes = True
+		self.matches = []
 		
 		#initialize processes and pass the pipe
 		for i in xrange(0,maxNumAgents):
@@ -25,13 +29,13 @@ class ImageQueue:
 			self.processPipes.append(ourpipe)
 			self.pipeBusy.append(True)
 			p = Process(target=imgmatcher.mkNewImgMatcher,
-						args= (i+1,theirpipe,self.imgLink))
+						args= (i+1,self.mainPipe,theirpipe,self.queueLock,self.imgLink,threshold))
 			p.start()
 			#p.join()
 		return
 
-
 	def push(self,img):
+		self.numImages += 1
 		self.queue.put(img)
 
 	def pop(self):
@@ -82,25 +86,46 @@ class ImageQueue:
 				if self.didWorkAndDone():
 					for lepipe in self.processPipes:
 						lepipe.send(('HALT', None))
-					self.mainPipe.send(None)
+					self.printFinalStats()
 					break
-				result = self.pollAllPipes()
-				if result != None:
-					(pid,msg) = result
-					#check queue and send to workers appropriately
-					if pid == 0:#Reddit Scraper
-						if msg == None:
-							self.expectingScrapes = False
-						else:
-							self.push(msg)
-					elif msg == "NEWIMG":
-						self.pipeBusy[pid-1] = False
+				result = self.recvPipe.recv()
+				#if result != None:
+				(pid,msg) = result
+				#check queue and send to workers appropriately
+				if pid == 0:#Reddit Scraper
+					if msg == None:
+						self.expectingScrapes = False
+					else:
+						self.push(msg)
+				elif msg == "NEWIMG":
+					self.pipeBusy[pid-1] = False
+				else:
+					self.printNewMatch(pid,msg)
+					self.pipeBusy[pid-1] = False
 				self.sendToArbitraryPipe()
 		except IOError:
 			print('IOError')
+
+	def printNewMatch(self,pid,msg):
+		#add msg to list of matches for final analysis
+		self.matches.append(msg)
+		#pretty print current match
+		print '\n'
+		print 'Received new match from pipe#',pid 
+		print 'URL: ',msg['url']
+
+	def printFinalStats(self):
+		print '\n'
+		print '-----------------------------------'
+		print 'Reap Post Final Analysis:'
+		print 'Out of', self.numImages,'image posts,',len(self.matches),'were reposts'
+		print 'Img links in order of reddit post score'
+		sortedMatches = sorted(self.matches,key = lambda match: match['score'],reverse=True)
+		for m in sortedMatches:
+			print 'Title:',m['title'], 'Score:', m['score']
 			
 	def didWorkAndDone(self):
-		if self.dispatches > 0 and not self.expectingScrapes:
+		if self.dispatches > 0 and not self.expectingScrapes and self.queueEmpty():
 			done = True
 			for busy in self.pipeBusy:
 				if busy:
