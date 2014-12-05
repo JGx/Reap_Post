@@ -62,6 +62,9 @@ class RedditPost:
 		return {'url':self.url, 'title':self.title, 'score':self.score, 'comments':self.num_comments}
 
 if __name__ == '__main__':
+
+	print "OK, in here"
+
 	#Parser asks user for subreddit to pull from
 	parser = argparse.ArgumentParser(description='Reap Post')
 	parser.add_argument('-S', dest='subreddit',  required=True)
