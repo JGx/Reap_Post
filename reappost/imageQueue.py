@@ -125,7 +125,7 @@ class ImageQueue:
 		print 'Out of', self.numImages,'image posts,',len(self.matches),'were reposts'
 		print 'Img links in descending order of reddit post score\n'
 		sortedMatches = sorted(self.matches,key = lambda match: match['score'],reverse=True)
-		num = 0
+		num = 1
 		for m in sortedMatches:
 			print '#', num
 			num += 1

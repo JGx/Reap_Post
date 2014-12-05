@@ -23,15 +23,20 @@ def analyze():
 
 	return 200
 
-@app.route("/results", methods=["GET"])
-def results():
+# @app.route("/results", methods=["GET"])
+# def results():
+	
+
+@app.route("/match", methods=["POST"])
+def match():
 	url = request.args.get("url")
 	score = request.args.get("score")
 	title = request.args.get("title")
 	num_comments = request.args.get("num_comments")
 	match = request.args.get("match")
 
-	print match
+	print "MATCH FOUND"
+	print url
 
 if __name__ == "__main__":
 	app.run()

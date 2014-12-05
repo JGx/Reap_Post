@@ -73,6 +73,7 @@ class ImgMatcher:
 
 	def sendResult(self, match, msg, difference):
 		params={'url':msg.url, 'score':msg.score, 'title':msg.title, 'num_comments':msg.num_comments, 'match':match, 'difference':difference}
+		requests.post("http://reap-post.herokuapp.com/match", params=params)
 		self.queueLock.acquire(True)
 		if match:
 			self.queuePipe.send((self.pid,params))
