@@ -21,11 +21,12 @@ def analyze():
 		"-N", num_posts,
 		"-W", 20])
 
+	print "SPAWNED PROCESS"
 	return 200
 
 # @app.route("/results", methods=["GET"])
 # def results():
-	
+
 
 @app.route("/match", methods=["POST"])
 def match():
