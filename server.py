@@ -18,7 +18,7 @@ def analyze():
 	subprocess.call(["python", "reappost/scraper.py", 
 		"-S", subreddit, 
 		"-I", image,
-		"-N", num_posts
+		"-N", num_posts,
 		"-W", 20])
 
 	return 200
