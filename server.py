@@ -19,7 +19,7 @@ def analyze():
 		"-S", subreddit, 
 		"-I", image,
 		"-N", num_posts
-		'-W', 20])
+		"-W", 20])
 
 	return 200
 
